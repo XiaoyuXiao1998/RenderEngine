@@ -8,6 +8,7 @@
 #include "../include/shader/shader.h"
 #include "../include/model/model.h"
 #include "../include/camera/camera.h"
+#include"../include/light/dir_light.h"
 
 #include <iostream>
 
@@ -76,8 +77,8 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader MarryShader("../../../shader/test.vs", "../../../shader/test.fs");
-     Shader FloorShader("../../../shader/test.vs", "../../../shader/floor.fs");
+    Shader MarryShader("../../../shader/test.vert", "../../../shader/test.frag");
+     Shader FloorShader("../../../shader/test.vert", "../../../shader/floor.frag");
 
     // load models
     // -----------
@@ -124,6 +125,13 @@ int main()
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
         MarryShader.setMat4("model", model);
+        MarryShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        MarryShader.setVec3("viewPos", camera.Position);
+
+        // light properties
+        MarryShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+        MarryShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        MarryShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         ourModel.Draw(MarryShader);
         //floor.Draw(FloorShader);
 

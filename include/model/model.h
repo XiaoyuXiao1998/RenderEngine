@@ -159,8 +159,6 @@ private:
         aiColor3D color;
         material->Get(AI_MATKEY_COLOR_AMBIENT, color);
         mat.ambient = glm::vec3(color.r, color.g, color.b);
-        float a = color.r;
-        printf("%f,\n", a);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
         mat.diffuse = glm::vec3(color.r, color.g, color.b);
         material->Get(AI_MATKEY_COLOR_SPECULAR, color);
