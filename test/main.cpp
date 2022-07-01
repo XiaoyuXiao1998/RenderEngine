@@ -77,7 +77,7 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader MarryShader("../../../shader/test.vert", "../../../shader/test.frag");
+    Shader MarryShader("../../../shader/test.vert", "../../../shader/shadowShader.frag");
      Shader FloorShader("../../../shader/test.vert", "../../../shader/floor.frag");
 
     // load models
@@ -129,8 +129,8 @@ int main()
         MarryShader.setVec3("viewPos", camera.Position);
 
         // light properties
-        MarryShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
-        MarryShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        MarryShader.setVec3("dirLight.ambient", 0.3f, 0.3f, 0.3f);
+        MarryShader.setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
         MarryShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         ourModel.Draw(MarryShader);
         //floor.Draw(FloorShader);
