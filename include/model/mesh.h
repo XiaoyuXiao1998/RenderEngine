@@ -109,6 +109,7 @@ public:
         shader.setVec3("material.ambient", material.ambient);
         shader.setVec3("material.diffuse", material.diffuse);
         shader.setVec3("material.specular", material.specular);
+        shader.setInt("TextureSamples", textures.size());
         // draw mesh
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);

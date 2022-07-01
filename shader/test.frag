@@ -30,6 +30,7 @@ in vec3 Normal;
 in vec3 FragPos;
 uniform Material material;
 uniform sampler2D texture_diffuse1;
+uniform int TextureSamples;
 
 
 //function prototypes
@@ -47,18 +48,26 @@ void main()
 
 //use Blinn-phong model to calculate
 vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
+
+    vec3 color;
+    if(TextureSamples == 1){
+        color = pow(texture(texture_diffuse1, TexCoords).rgb,vec3(2.2));
+    }
+    else{
+        color = material.diffuse;
+    }
     vec3 lightDir = normalize(-dir_light.direction);
-    vec3 ambient = dir_light.ambient * texture(texture_diffuse1, TexCoords).rgb;
+    vec3 ambient = dir_light.ambient * color;
     
     //diffuse light 
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = dir_light.diffuse * diff * vec3(texture(texture_diffuse1, TexCoords));
+    vec3 diffuse = dir_light.diffuse * diff * color;
     
 
     //specular light
     vec3 halfVec = normalize(lightDir + view_dir);
     float spec = pow(max(dot(halfVec,normal),0.0),32.0);
-    vec3 specular = dir_light.specular * spec * vec3(texture(texture_diffuse1, TexCoords));
+    vec3 specular = dir_light.specular * spec * material.specular;
 
     return ambient + diffuse + specular;
 }

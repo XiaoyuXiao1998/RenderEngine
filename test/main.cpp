@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../include/shader/shader.h"
-#include "../include/model/model.h"
+#include "../include/scene/scene.h"
 #include "../include/camera/camera.h"
 #include"../include/light/dir_light.h"
 
@@ -77,16 +77,23 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader MarryShader("../../../shader/test.vert", "../../../shader/shadowShader.frag");
-     Shader FloorShader("../../../shader/test.vert", "../../../shader/floor.frag");
+    Shader *MarryShader = new Shader("../../../shader/test.vert", "../../../shader/test.frag");
+     Shader *FloorShader = new Shader("../../../shader/test.vert", "../../../shader/test.frag");
 
     // load models
     // -----------
 
 
 
-    Model ourModel("../../../assets/mary/Marry.obj");
-    Model floor("../../../assets/floor/floor.obj");
+    Model *ourModel = new Model("../../../assets/mary/Marry.obj");
+    Model *floor = new Model("../../../assets/floor/floor.obj");
+
+    Scene scene;
+    scene.addModels(ourModel, MarryShader);
+    scene.addModels(floor, FloorShader);
+    scene.setCamera(&camera);
+    
+
 
 
     // draw in wireframe
@@ -111,37 +118,7 @@ int main()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't forget to enable shader before setting uniforms
-        MarryShader.use();
-
-        // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        MarryShader.setMat4("projection", projection);
-        MarryShader.setMat4("view", view);
-
-        // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        MarryShader.setMat4("model", model);
-        MarryShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        MarryShader.setVec3("viewPos", camera.Position);
-
-        // light properties
-        MarryShader.setVec3("dirLight.ambient", 0.3f, 0.3f, 0.3f);
-        MarryShader.setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
-        MarryShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-        ourModel.Draw(MarryShader);
-        //floor.Draw(FloorShader);
-
-        //render floor objects
-        FloorShader.use();
-        FloorShader.setMat4("projection", projection);
-        FloorShader.setMat4("view", view);
-        FloorShader.setMat4("model", model);
-        floor.Draw(FloorShader);
-
+        scene.renderScene();
 
 
 

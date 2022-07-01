@@ -37,7 +37,7 @@ target_link_libraries(libdeps INTERFACE
 
 
 # The main opengl framework to of rendering
-add_executable(main test/main.cpp "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h")
+add_executable(main test/main.cpp "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp")
 #add_dependencies(main libmain)
 target_link_libraries(main PRIVATE libdeps)
 
