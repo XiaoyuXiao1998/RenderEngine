@@ -98,6 +98,7 @@ int main()
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    scene.setDepthMap();
 
     // render loop
     // -----------
@@ -118,7 +119,7 @@ int main()
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        scene.renderScene();
+        scene.viewDepthMap();
 
 
 

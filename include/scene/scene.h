@@ -11,11 +11,19 @@ class Scene {
 	// settings
 	const unsigned int SCR_WIDTH = 800;
 	const unsigned int SCR_HEIGHT = 600;
+	const unsigned int SHADOW_WIDTH = 1024;
+	const unsigned int SHADOW_HEIGHT = 1024;
+	//shadow map settings
+	unsigned int depthMapFBO;
+	unsigned int depthMap;
 
 	vector<Model*> models;
 	vector<Shader*> shaders;
 	Camera* camera;
 	vector<EmissiveMaterial*> lights;
+
+	Shader* depthShader;
+	Shader* debugDepthQuad;
 	
 
 public:
@@ -31,5 +39,8 @@ public:
 		lights.push_back(light);
 	}
 	void renderScene();
+
+	void setDepthMap();
 	
+	void viewDepthMap();
 };
