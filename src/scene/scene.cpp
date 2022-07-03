@@ -25,14 +25,26 @@ void Scene::setDepthMap() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	//set depth shader;
-	depthShader = new Shader("../../../shader/shadowShader.vert", "../../../shader/shadowShader.frag");
+	depthShader = new Shader("../../../shader/depthShader.vert", "../../../shader/depthShader.frag");
 	debugDepthQuad = new Shader("../../../shader/debug_quad.vert", "../../../shader/debug_quad.frag");
 
 	debugDepthQuad->use();
 	debugDepthQuad->setInt("depthMap", 0);
 
-
-
+	//set for shadowrender
+	if (lights.size() > 0 && lights[0]->hasShadowMap == true) {
+		for (int i = 0; i < models.size(); i++) {
+			shaders[i]->use();
+			shaders[i]->setBool("hasShadowMap", true);
+		}
+	}
+	else {
+		for (int i = 0; i < models.size(); i++) {
+			shaders[i]->use();
+			shaders[i]->setBool("hasShadowMap", true);
+		
+		}
+	}
 }
 
 
@@ -47,7 +59,7 @@ void Scene::viewDepthMap() {
 
 			// lighting info
 	// -------------
-	glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+	glm::vec3 lightPos(0.0f, 4.0f, 4.0f);
 
 
 	glm::mat4 lightProjection, lightView;
@@ -59,7 +71,7 @@ void Scene::viewDepthMap() {
 
 	// render scene from light's point of view
 	depthShader->use();
-	depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+	depthShader->setMat4("uLightMVP", lightSpaceMatrix);
 	depthShader->setMat4("model", model);
 
 	//set viewpoint 
@@ -74,7 +86,7 @@ void Scene::viewDepthMap() {
 
 	for (int i = 0; i < models.size(); i++) {
 
-		models[i]->Draw(*depthShader);
+		models[i]->Draw(*depthShader,depthMap);
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -137,26 +149,26 @@ void Scene::renderScene() {
 
 
 	//shadow pass
-	if (lights[0]->hasShadowMap == true) {
+	if (true) {
 
 
 		//set light's perspective
 
 			// lighting info
 	// -------------
-		glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+		glm::vec3 lightPos(0.0f, 4.0f, 4.f);
 
 
 		glm::mat4 lightProjection, lightView;
 		glm::mat4 lightSpaceMatrix;
-		float near_plane = 1.0f, far_plane = 7.5f;
+		float near_plane = 1.0f, far_plane = 30.5f;
 		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 		lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		lightSpaceMatrix = lightProjection * lightView;
 
 		// render scene from light's point of view
 		depthShader->use();
-		depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		depthShader->setMat4("uLightMVP", lightSpaceMatrix);
 		depthShader->setMat4("model", model);
 
 		//set viewpoint 
@@ -171,7 +183,14 @@ void Scene::renderScene() {
 		
 		for (int i = 0; i < models.size(); i++) {
 		
-			models[i]->Draw(*depthShader);
+			models[i]->Draw(*depthShader,depthMap);
+		}
+		for (int i = 0; i < models.size(); i++) {
+			//set for  shadowrender
+			shaders[i]->use();
+			shaders[i]->setMat4("uLightMVP", lightSpaceMatrix);
+			shaders[i]->setVec3("LightPos", lightPos);
+			shaders[i]->setBool("hasShadowMap", true);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -197,7 +216,7 @@ void Scene::renderScene() {
 		shaders[i]->setMat4("model", model);
 
 		//set blinn-phong
-		shaders[i]->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+		shaders[i]->setVec3("dirLight.direction", 0.0f, -1.0f, -1.0f);
 		shaders[i]->setVec3("viewPos", camera->Position);
 
 		// light properties
@@ -205,9 +224,13 @@ void Scene::renderScene() {
 		shaders[i]->setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
 		shaders[i]->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
+	;
+	
+
+
 	
 		
-		models[i]->Draw(*shaders[i]);
+		models[i]->Draw(*shaders[i],depthMap);
 
 
 	}

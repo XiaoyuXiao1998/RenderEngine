@@ -75,7 +75,7 @@ public:
         setupMesh();
     }
     // render the mesh
-    void Draw(Shader& shader)
+    void Draw(Shader& shader, unsigned int &depthMap)
     {
         // bind appropriate textures
         unsigned int diffuseNr = 1;
@@ -104,7 +104,10 @@ public:
             // and finally bind the texture
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
-
+       glActiveTexture(GL_TEXTURE0 + textures.size());
+       shader.setInt("shadowMap", textures.size());
+       glBindTexture(GL_TEXTURE_2D, depthMap);
+        
      
         shader.setVec3("material.ambient", material.ambient);
         shader.setVec3("material.diffuse", material.diffuse);
