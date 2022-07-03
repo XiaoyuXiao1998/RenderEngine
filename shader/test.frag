@@ -1,5 +1,10 @@
 #version 330 core
 out vec4 FragColor;
+// Shadow map related variables
+#define NUM_SAMPLES 49
+#define EPS 1e-3
+#define PI 3.141592653589793
+#define PI2 6.283185307179586
 
 struct Material {
     vec3 ambient;
@@ -42,6 +47,10 @@ uniform bool hasShadowMap;
 //function prototypes
 vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir);
 float shadowCalculation(vec4 FragPosLightSpace);
+float PCF(vec4 fragPosLightSpace);
+void uniformDiskSamples( const in vec2 randomSeed );
+
+vec2 uniformDisk[NUM_SAMPLES];
 
 void main()
 {    
@@ -60,7 +69,7 @@ vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
 
     float visibility = 1;
     if(hasShadowMap){
-        visibility = shadowCalculation(FragPosLightSpace);
+        visibility = PCF(FragPosLightSpace);
       //  visibility = 0;
     }
 
@@ -97,8 +106,66 @@ float shadowCalculation(vec4 fragPosLightSpace){
    // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
   // check whether current frag pos is in shadow
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    float shadow = currentDepth -0.01> closestDepth  ? 1.0 : 0.0;
 
     return  shadow;
 
+}
+
+
+//persontage closer filter
+float PCF(vec4 fragPosLightSpace){
+ // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+  // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float final_shadow = 0;
+    uniformDiskSamples(fragPosLightSpace.xy);
+    vec2 texelSize = 1.0 / textureSize(shadowMap,0);
+
+    for(int i = 0 ;i < NUM_SAMPLES ;i++){
+   // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy + 7 * uniformDisk[i] * texelSize).r; 
+   // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+  // check whether current frag pos is in shadow
+    float shadow = currentDepth -0.01> closestDepth  ? 1.0 : 0.0;
+    final_shadow += shadow/NUM_SAMPLES;
+    }
+
+    return  final_shadow;
+
+}
+
+float rand_2to1(vec2 uv ) { 
+  // 0 - 1
+	const  float a = 12.9898, b = 78.233, c = 43758.5453;
+    float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );
+	return fract(sin(sn) * c);
+}
+
+highp float rand_1to1(highp float x ) { 
+  // -1 -1
+  return fract(sin(x)*10000.0);
+}
+
+void uniformDiskSamples( const in vec2 randomSeed ) {
+
+  float randNum = rand_2to1(randomSeed);
+  float sampleX = rand_1to1( randNum ) ;
+  float sampleY = rand_1to1( sampleX ) ;
+
+  float angle = sampleX * PI2;
+  float radius = sqrt(sampleY);
+
+  for( int i = 0; i < NUM_SAMPLES; i ++ ) {
+    uniformDisk[i] = vec2( radius * cos(angle) , radius * sin(angle)  );
+
+    sampleX = rand_1to1( sampleY ) ;
+    sampleY = rand_1to1( sampleX ) ;
+
+    angle = sampleX * PI2;
+    radius = sqrt(sampleY);
+  }
 }
