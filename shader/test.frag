@@ -5,6 +5,7 @@ out vec4 FragColor;
 #define EPS 1e-3
 #define PI 3.141592653589793
 #define PI2 6.283185307179586
+#define LIGHT_WIDTH 4.0
 
 struct Material {
     vec3 ambient;
@@ -46,9 +47,18 @@ uniform bool hasShadowMap;
 
 //function prototypes
 vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir);
+//shadow map function
 float shadowCalculation(vec4 FragPosLightSpace);
-float PCF(vec4 fragPosLightSpace);
+//percentage closer filter
+float PCF(vec4 fragPosLightSpace,float filterSize);
+//percentage closer soft shadow
+float PCSS(vec4 fragPosLightSpace);
+
+//uniform sample function for PCF
 void uniformDiskSamples( const in vec2 randomSeed );
+
+//find blocker functions for PCSS
+float findBlocker(vec3  projCoords, float zReceiver ) ;
 
 vec2 uniformDisk[NUM_SAMPLES];
 
@@ -69,9 +79,12 @@ vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
 
     float visibility = 1;
     if(hasShadowMap){
-        visibility = PCF(FragPosLightSpace);
+        //visibility = PCSS(FragPosLightSpace);
+        visibility = PCSS(FragPosLightSpace);
       //  visibility = 0;
     }
+
+  
 
     vec3 color;
     if(TextureSamples == 1){
@@ -114,7 +127,7 @@ float shadowCalculation(vec4 fragPosLightSpace){
 
 
 //persontage closer filter
-float PCF(vec4 fragPosLightSpace){
+float PCF(vec4 fragPosLightSpace,float filterSize){
  // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
   // transform to [0,1] range
@@ -126,7 +139,7 @@ float PCF(vec4 fragPosLightSpace){
 
     for(int i = 0 ;i < NUM_SAMPLES ;i++){
    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy + 7 * uniformDisk[i] * texelSize).r; 
+    float closestDepth = texture(shadowMap, projCoords.xy + filterSize * uniformDisk[i] * texelSize).r; 
    // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
   // check whether current frag pos is in shadow
@@ -137,6 +150,8 @@ float PCF(vec4 fragPosLightSpace){
     return  final_shadow;
 
 }
+
+
 
 float rand_2to1(vec2 uv ) { 
   // 0 - 1
@@ -168,4 +183,65 @@ void uniformDiskSamples( const in vec2 randomSeed ) {
     angle = sampleX * PI2;
     radius = sqrt(sampleY);
   }
+}
+
+
+
+//percentage closer soft shadows
+float PCSS(vec4 fragPosLightSpace){
+ // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+  // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float final_shadow = 0;
+    uniformDiskSamples(fragPosLightSpace.xy);
+    vec2 texelSize = 1.0 / textureSize(shadowMap,0);
+
+  // STEP 1: avgblocker depth
+
+  float avg_blocker_depth = findBlocker(projCoords,0.1);
+
+  // STEP 2: penumbra size
+  //   depth(blocker to light)/light_width = depth(blocker to shadow) / shadow_width 
+  float penumbra_size = LIGHT_WIDTH  * (projCoords.z - avg_blocker_depth) / avg_blocker_depth;
+
+  // STEP 3: filtering
+
+     for(int i = 0 ;i < NUM_SAMPLES ;i++){
+   // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy + penumbra_size * uniformDisk[i] * texelSize).r; 
+   // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+  // check whether current frag pos is in shadow
+    float shadow = currentDepth -0.01> closestDepth  ? 1.0 : 0.0;
+    final_shadow += shadow/NUM_SAMPLES;
+    }
+
+    return final_shadow;
+  
+
+}
+
+
+//find average blocker depth
+float findBlocker( vec3  projCoords, float zReceiver ){
+
+    float final_dep = 0;
+    
+    float sample_radius =  (projCoords.z- zReceiver)/projCoords.z * LIGHT_WIDTH;
+    vec2 texelSize = 1.0 / textureSize(shadowMap,0);
+
+    //now sample depth
+     for(int i = 0 ;i < NUM_SAMPLES ;i++){
+   // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy + sample_radius * uniformDisk[i] * texelSize).r; 
+
+     final_dep += closestDepth;
+   
+    }
+    final_dep  = final_dep/NUM_SAMPLES;
+
+
+    return final_dep;
 }
