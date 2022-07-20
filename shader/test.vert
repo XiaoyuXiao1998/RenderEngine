@@ -19,7 +19,6 @@ void main()
     TexCoords = aTexCoords;    
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal =  transpose(inverse(mat3(model))) * aNormal;
-    TexCoords = aTexCoords;
     FragPosLightSpace = uLightMVP  * vec4(FragPos, 1.0);
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);

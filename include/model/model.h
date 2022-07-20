@@ -22,6 +22,7 @@
 using namespace std;
 
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+unsigned int loadCubeMap(vector<std::string> faces);
 
 class Model
 {
@@ -30,6 +31,12 @@ public:
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>    meshes;
     string directory;
+
+    //three-oreder SH Light coefficients
+    glm::mat3 aPrecomputeLR;
+    glm::mat3 aPrecomputeLG;
+    glm::mat3 aPrecomputeLB;
+
     bool gammaCorrection;
 
     // constructor, expects a filepath to a 3D model.
@@ -46,6 +53,10 @@ public:
             meshes[i].Draw(shader, depthMap);
         }
     }
+
+    void setCubeMapTextures(vector<std::string> faces);
+    void loadPRTparameters(string path, Shader& shader);
+
 
 private:
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.

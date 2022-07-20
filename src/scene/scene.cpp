@@ -41,8 +41,8 @@ void Scene::setDepthMap() {
 	else {
 		for (int i = 0; i < models.size(); i++) {
 			shaders[i]->use();
-			shaders[i]->setBool("hasShadowMap", true);
-		
+			shaders[i]->setBool("hasShadowMap", false);
+
 		}
 	}
 }
@@ -143,6 +143,7 @@ void Scene::renderScene() {
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 
+
 	// view/projection transformations
 	glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	glm::mat4 view = camera->GetViewMatrix();
@@ -207,7 +208,7 @@ void Scene::renderScene() {
 
 
 
-	for (int i = 0; i < models.size(); i++) {
+	for (int i = 0; i < models.size() ; i++) {
 		shaders[i]->use();
 
 		//set MVP
@@ -223,16 +224,63 @@ void Scene::renderScene() {
 		shaders[i]->setVec3("dirLight.ambient", 0.3f, 0.3f, 0.3f);
 		shaders[i]->setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
 		shaders[i]->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
-
-	;
-	
-
-
-	
 		
 		models[i]->Draw(*shaders[i],depthMap);
 
 
 	}
+
+	//------------------draw skybox at last-----------------------------------
+
 	
+}
+
+
+void Scene::testSH(float time) {
+	// render the loaded model
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+	
+
+	// view/projection transformations
+	glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = camera->GetViewMatrix();
+
+	//set viewport
+	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	for (int i = 0; i < models.size() - 1; i++) {
+		shaders[i]->use();
+
+		//set MVP
+		shaders[i]->setMat4("projection", projection);
+		shaders[i]->setMat4("view", view);
+		shaders[i]->setMat4("model", model);
+
+
+		//rotate SH
+		shaders[i]->setMat3("aPrecomputeLR", models[i]->aPrecomputeLR);
+		shaders[i]->setMat3("aPrecomputeLG", models[i]->aPrecomputeLG);
+		shaders[i]->setMat3("aPrecomputeLB", models[i]->aPrecomputeLB);
+		
+		
+
+		models[i]->Draw(*shaders[i], depthMap);
+
+
+	}
+
+	//------------------draw skybox at last-----------------------------------
+
+	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+	shaders[models.size() - 1]->use();
+
+	//set MVP
+	shaders[models.size() - 1]->setMat4("projection", projection);
+	shaders[models.size() - 1]->setMat4("view", view);
+	shaders[models.size() - 1]->setMat4("model", glm::rotate(model, time, glm::vec3(0.0f, -1.0f, 0.0f)));
+	models[models.size() - 1]->Draw(*shaders[models.size() - 1], depthMap);
+	glDepthFunc(GL_LESS); // set depth function back to default
 }

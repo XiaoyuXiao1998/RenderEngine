@@ -77,7 +77,7 @@ void main()
 //use Blinn-phong model to calculate
 vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
 
-    float visibility = 1;
+    float visibility = 0;
     if(hasShadowMap){
         //visibility = PCSS(FragPosLightSpace);
         visibility = PCSS(FragPosLightSpace);

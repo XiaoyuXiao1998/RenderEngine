@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "../../include/utils/SH.h"
 
 class Scene {
 	// settings
@@ -43,4 +44,6 @@ public:
 	void setDepthMap();
 	
 	void viewDepthMap();
+
+	void testSH(float time);
 };
