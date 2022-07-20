@@ -259,11 +259,33 @@ void Scene::testSH(float time) {
 		shaders[i]->setMat4("view", view);
 		shaders[i]->setMat4("model", model);
 
+		// get the rotation matrix
+		glm::mat3 rotation_matrix = glm::mat3(glm::rotate(model, time, glm::vec3(0.0f, -1.0f, 0.0f)));
 
-		//rotate SH
-		shaders[i]->setMat3("aPrecomputeLR", models[i]->aPrecomputeLR);
-		shaders[i]->setMat3("aPrecomputeLG", models[i]->aPrecomputeLG);
-		shaders[i]->setMat3("aPrecomputeLB", models[i]->aPrecomputeLB);
+		//rotate the first order  SH coefficients
+		static glm::mat3 aPrecomputeLR_rotation;
+		static glm::mat3 aPrecomputeLG_rotation;
+		static glm::mat3 aPrecomputeLB_rotation;
+	
+	
+		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLR_rotation,models[i]->aPrecomputeLR);
+		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLG_rotation, models[i]->aPrecomputeLG);
+		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLB_rotation,models[i]->aPrecomputeLB);
+
+		//rotate the second oder SH coefficients
+		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLR);
+		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLG);
+		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLB);
+
+
+
+
+
+
+		//buffer SH to vertex shader
+		shaders[i]->setMat3("aPrecomputeLR", aPrecomputeLR_rotation);
+		shaders[i]->setMat3("aPrecomputeLG", aPrecomputeLG_rotation);
+		shaders[i]->setMat3("aPrecomputeLB", aPrecomputeLB_rotation);
 		
 		
 

@@ -59,7 +59,7 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -91,17 +91,17 @@ int main()
     Model* Skybox = new Model("../../../assets/testObj/testObj.obj");
     
     //set prt parameters
-    ourModel->loadPRTparameters("../../../assets//cubemap/GraceCathedral",*MarryShader);
+    ourModel->loadPRTparameters("../../../assets//cubemap/CornellBox",*MarryShader);
 
 
     vector<std::string> faces
     {
-       "../../../assets/cubemap/GraceCathedral/posx.jpg",
-       "../../../assets/cubemap/GraceCathedral/negx.jpg",
-       "../../../assets/cubemap/GraceCathedral/posy.jpg",
-       "../../../assets/cubemap/GraceCathedral/negy.jpg",
-       "../../../assets/cubemap/GraceCathedral/posz.jpg",
-       "../../../assets/cubemap/GraceCathedral/negz.jpg"
+       "../../../assets/cubemap/CornellBox/posx.jpg",
+       "../../../assets/cubemap/CornellBox/negx.jpg",
+       "../../../assets/cubemap/CornellBox/posy.jpg",
+       "../../../assets/cubemap/CornellBox/negy.jpg",
+       "../../../assets/cubemap/CornellBox/posz.jpg",
+       "../../../assets/cubemap/CornellBox/negz.jpg"
     };
     Skybox->setCubeMapTextures(faces);
 

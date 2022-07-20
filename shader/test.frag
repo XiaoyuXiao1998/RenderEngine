@@ -79,9 +79,9 @@ vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
 
     float visibility = 0;
     if(hasShadowMap){
-        //visibility = PCSS(FragPosLightSpace);
-        visibility = PCSS(FragPosLightSpace);
-      //  visibility = 0;
+       // visibility = PCSS(FragPosLightSpace);
+       // visibility = PCF(FragPosLightSpace,7);
+        visibility = shadowCalculation(FragPosLightSpace);
     }
 
   

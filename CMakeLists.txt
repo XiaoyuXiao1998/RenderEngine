@@ -37,15 +37,15 @@ target_link_libraries(libdeps INTERFACE
 
 
 # The main opengl framework to of rendering
-add_executable(main "test/test_PCSS.cpp" "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h")
+add_executable(main "test/test_PCSS.cpp" "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
 #add_dependencies(main libmain)
 target_link_libraries(main PRIVATE libdeps)
 
 
-add_executable(test_PRT test/test_PRT.cpp  "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h")
+add_executable(test_PRT test/test_PRT.cpp  "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
 target_link_libraries(test_PRT PRIVATE libdeps)
 
 
-add_executable(test_FUNC test/test_functions.cpp "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h")
+add_executable(test_FUNC test/test_functions.cpp "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
 target_link_libraries(test_FUNC PRIVATE libdeps)
 
