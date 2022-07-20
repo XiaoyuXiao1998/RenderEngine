@@ -122,10 +122,10 @@
 		//construct n0 - n5;
 		static double k = sqrt(1 / 2);
 		glm::vec3 n0(1, 0, 0);
-		glm::vec3 n1(1, 0, 0);
-		glm::vec3 n2(1, 0, 0);
-		glm::vec3 n3(1, 0, 0);
-		glm::vec3 n4(1, 0, 0);
+		glm::vec3 n1(0, 0, 1);
+		glm::vec3 n2(k, k, 0);
+		glm::vec3 n3(1, 0, k);
+		glm::vec3 n4(0, k, k);
 
 
 		//compute A*x;
