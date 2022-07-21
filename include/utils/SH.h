@@ -17,7 +17,7 @@ namespace SH {
 	
 	void RotateSH_L1(const glm::mat3& R, glm::mat3& SHcoefficients, const glm::mat3& ref);
 
-	void RotateSH_L2(const glm::mat3& R, glm::mat3& SHcoefficients);
+	void RotateSH_L2(const glm::mat3& R, glm::mat3& SHcoefficients, const glm::mat3& ref);
 
 
 

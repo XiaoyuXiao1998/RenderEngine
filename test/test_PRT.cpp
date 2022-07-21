@@ -137,7 +137,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // scene.viewDepthMap();
-        float time = (float)glfwGetTime() / 5;
+        float time = (float)glfwGetTime() / 2;
         scene.testSH(time);
 
 

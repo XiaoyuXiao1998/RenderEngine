@@ -251,6 +251,9 @@ void Scene::testSH(float time) {
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// get the rotation matrix
+	glm::mat3 rotation_matrix = glm::mat3(glm::rotate(model, time, glm::vec3(0.0f, -1.0f, 0.0f)));
+
 	for (int i = 0; i < models.size() - 1; i++) {
 		shaders[i]->use();
 
@@ -259,8 +262,6 @@ void Scene::testSH(float time) {
 		shaders[i]->setMat4("view", view);
 		shaders[i]->setMat4("model", model);
 
-		// get the rotation matrix
-		glm::mat3 rotation_matrix = glm::mat3(glm::rotate(model, time, glm::vec3(0.0f, -1.0f, 0.0f)));
 
 		//rotate the first order  SH coefficients
 		static glm::mat3 aPrecomputeLR_rotation;
@@ -268,14 +269,14 @@ void Scene::testSH(float time) {
 		static glm::mat3 aPrecomputeLB_rotation;
 	
 	
-		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLR_rotation,models[i]->aPrecomputeLR);
-		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLG_rotation, models[i]->aPrecomputeLG);
-		  SH::RotateSH_L1(rotation_matrix, aPrecomputeLB_rotation,models[i]->aPrecomputeLB);
+		 SH::RotateSH_L1(rotation_matrix, aPrecomputeLR_rotation,models[i]->aPrecomputeLR);
+		 SH::RotateSH_L1(rotation_matrix, aPrecomputeLG_rotation, models[i]->aPrecomputeLG);
+		 SH::RotateSH_L1(rotation_matrix, aPrecomputeLB_rotation,models[i]->aPrecomputeLB);
 
 		//rotate the second oder SH coefficients
-		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLR);
-		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLG);
-		//SH::RotateSH_L2(rotation_matrix, models[i]->aPrecomputeLB);
+		SH::RotateSH_L2(rotation_matrix, aPrecomputeLR_rotation, models[i]->aPrecomputeLR);
+		SH::RotateSH_L2(rotation_matrix, aPrecomputeLG_rotation, models[i]->aPrecomputeLG);
+		SH::RotateSH_L2(rotation_matrix, aPrecomputeLB_rotation, models[i]->aPrecomputeLB);
 
 
 
@@ -286,6 +287,9 @@ void Scene::testSH(float time) {
 		shaders[i]->setMat3("aPrecomputeLR", aPrecomputeLR_rotation);
 		shaders[i]->setMat3("aPrecomputeLG", aPrecomputeLG_rotation);
 		shaders[i]->setMat3("aPrecomputeLB", aPrecomputeLB_rotation);
+		//shaders[i]->setMat3("aPrecomputeLR",  models[i]->aPrecomputeLR);
+		//shaders[i]->setMat3("aPrecomputeLG", models[i]->aPrecomputeLG);
+		//shaders[i]->setMat3("aPrecomputeLB", models[i]->aPrecomputeLB);
 		
 		
 
