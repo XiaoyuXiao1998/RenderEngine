@@ -13,4 +13,4 @@ This is my personal rendering engine project that uses OPENGL exclusively to lea
 
 ### Precomputed Radiance Transfer and SH function
 1.Rotating Enviroment Lighting using SH function
-<img width = "400" height = "300" src = "https://github.com/XiaoyuXiao1998/RenderEngine/blob/master/demos/rotating_PRT.gif" alt"rotating_PRT"/>
+<img width = "400" height = "300" src = "https://github.com/XiaoyuXiao1998/RenderEngine/blob/master/demos/rotating_PRT.gif" alt = "rotating_PRT"/>
