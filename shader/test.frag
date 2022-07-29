@@ -38,6 +38,7 @@ in vec4 FragPosLightSpace;
 uniform Material material;
 uniform sampler2D shadowMap;
 uniform sampler2D texture_diffuse1;
+uniform sampler2D texture_diffuse2;
 uniform int TextureSamples;
 
 //variables of shadowmaps
@@ -68,9 +69,9 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 radiance = CalcDirLight(dirLight,norm,viewDir);
-   
 
    FragColor = vec4(radiance, 1.0); 
+ 
 }
 
 
@@ -87,7 +88,7 @@ vec3 CalcDirLight(DirLight dir_light,vec3 normal, vec3 view_dir){
   
 
     vec3 color;
-    if(TextureSamples == 1){
+    if(TextureSamples >=1){
         color = pow(texture(texture_diffuse1, TexCoords).rgb,vec3(2.2));
     }
     else{

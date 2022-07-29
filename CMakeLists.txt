@@ -34,18 +34,36 @@ target_link_libraries(libdeps INTERFACE
     libmain
 )
 
+set(SOURCES
+src/scene/scene.cpp
+src/model/model.cpp
+src/utils/SH.cpp
+ "src/material/texture.cpp" "src/EnvGenerator/EnvGenerator.cpp")
+
 
 
 # The main opengl framework to of rendering
-add_executable(main "test/test_PCSS.cpp" "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
+add_executable(main "test/test_PCSS.cpp" ${SOURCES})
 #add_dependencies(main libmain)
-target_link_libraries(main PRIVATE libdeps)
+target_link_libraries(main 
+PRIVATE libdeps
+${PROJECT_SOURCE_DIR}/include
+)
+add_executable(test_PRT test/test_PRT.cpp ${SOURCES} )
+target_link_libraries(test_PRT 
+PRIVATE libdeps
+${PROJECT_SOURCE_DIR}/include
+)
 
 
-add_executable(test_PRT test/test_PRT.cpp  "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
-target_link_libraries(test_PRT PRIVATE libdeps)
+add_executable(test_Kulla_Conty test/test_Kulla_Conty.cpp ${SOURCES})
+target_link_libraries(test_Kulla_Conty 
+PRIVATE libdeps
+${PROJECT_SOURCE_DIR}/include
+)
 
-
-add_executable(test_FUNC test/test_functions.cpp "include/shader/shader.h" "include/camera/camera.h" "include/model/mesh.h" "include/model/model.h""include/light/dir_light.h" "include/light/light.h" "include/scene/scene.h" "src/scene/scene.cpp" "src/model/model.cpp"  "include/utils/utils.h" "include/utils/SH.h" "src/utils/SH.cpp")
-target_link_libraries(test_FUNC PRIVATE libdeps)
-
+add_executable(test_IBL test/test_IBL.cpp ${SOURCES})
+target_link_libraries(test_IBL
+PRIVATE libdeps
+${PROJECT_SOURCE_DIR}/include
+)

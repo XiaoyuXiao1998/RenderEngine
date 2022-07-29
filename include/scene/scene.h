@@ -17,11 +17,15 @@ class Scene {
 	//shadow map settings
 	unsigned int depthMapFBO;
 	unsigned int depthMap;
+	unsigned int ibl_diffuse_irradiance_map;
 
 	vector<Model*> models;
 	vector<Shader*> shaders;
 	Camera* camera;
 	vector<EmissiveMaterial*> lights;
+
+	//testAreaLight
+	AreaLight* arealight;
 
 	Shader* depthShader;
 	Shader* debugDepthQuad;
@@ -46,4 +50,12 @@ public:
 	void viewDepthMap();
 
 	void testSH(float time);
+
+	void setTestAreaLight(glm::vec3 light_intensity, glm::vec3 light_color, bool hasShadowMap, glm::vec3 light_pos, float l, float w) {
+		arealight = new AreaLight(light_intensity, light_color, hasShadowMap, light_pos, l, w);
+	}
+
+	void setDiffuseIrradianceMap(unsigned int ibl_diffuse_irradiance_id) {
+		this->ibl_diffuse_irradiance_map = ibl_diffuse_irradiance_id;
+	}
 };

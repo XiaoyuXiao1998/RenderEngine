@@ -5,13 +5,14 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
+#include <assimp/pbrmaterial.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 #include "mesh.h"
 #include "../shader/shader.h"
+#include"../material/textures.h"
 
 #include <string>
 #include <fstream>
@@ -24,12 +25,77 @@ using namespace std;
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 unsigned int loadCubeMap(vector<std::string> faces);
 
+
+
+//used for model transform
+struct ModelTransform {
+    //translation
+    float tx;
+    float ty;
+    float tz;
+    //scale
+    float sx;
+    float sy;
+    float sz ;
+    //rotation angle;
+    float theta;
+    //rotation axis ;
+    glm::vec3 rotation_axis;
+
+    ModelTransform() {
+        //translation
+         tx = 0;
+         ty = 0;
+         tz = 0;
+        //scale
+         sx = 1.0;
+         sy = 1.0;
+         sz = 1.0;
+        //rotation angle;
+         theta = 0;
+        //rotation axis ;
+         rotation_axis = glm::vec3(0, 1, 0);
+    }
+
+    ModelTransform(float Tx, float Ty,float Tz){
+        //translation
+        tx = Tx;
+        ty = Ty;
+        tz = Tz;
+        //scale
+        sx = 1.0;
+        sy = 1.0;
+        sz = 1.0;
+        //rotation angle;
+        theta = 0;
+        //rotation axis ;
+        rotation_axis = glm::vec3(0, 1, 0);
+    }
+    ModelTransform(float Tx, float Ty, float Tz, float Sx, float Sy, float Sz) {
+        //translation
+        tx = Tx;
+        ty = Ty;
+        tz = Tz;
+        //scale
+        sx = Sx;
+        sy = Sy;
+        sz = Sz;
+        //rotation angle;
+        theta = 0;
+        //rotation axis ;
+        rotation_axis = glm::vec3(0, 1, 0);
+    }
+};
+
+
 class Model
 {
 public:
     // model data 
-    vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
+    map<string, shared_ptr<Texture>>
+        textures_loaded;    // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>    meshes;
+    vector<shared_ptr<MAT::Material>> mesh_materials;
     string directory;
 
     //three-oreder SH Light coefficients
@@ -38,30 +104,99 @@ public:
     glm::mat3 aPrecomputeLB;
 
     bool gammaCorrection;
+    unsigned int mapid;
 
     // constructor, expects a filepath to a 3D model.
-    Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
+    Model(string const& path, MAT::Material_type material_type = MAT::Material_type::SPECULAR, bool gamma = false) : gammaCorrection(gamma)
     {
-        loadModel(path);
+        ModelTransform transform;
+        loadModel(path,transform,material_type);
+    }
+
+    Model(string const& path, const ModelTransform& transform, MAT::Material_type material_type = MAT::Material_type::SPECULAR,bool gamma = false) : gammaCorrection(gamma)
+    {
+        loadModel(path,transform,material_type);
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader& shader, unsigned int &depthMap)
+    void Draw(Shader& shader, unsigned int &depthMap,
+        unsigned int ibl_diffuse_irradiance_map_id = -1)
     {
-        for (unsigned int i = 0; i < meshes.size(); i++) {
-          
-            meshes[i].Draw(shader, depthMap);
+
+        shader.use();
+        for (auto& mesh : meshes) {
+            auto material = mesh_materials[mesh.mMaterialIndex];
+            if (material->getMaterialType() == MAT::Material_type::SKYBOX) {
+                glActiveTexture(GL_TEXTURE0);
+                shader.setInt("skybox", 0);
+                //need to modified
+                //glBindTexture(GL_TEXTURE_CUBE_MAP, material->getCubeMapId());
+           
+                glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_diffuse_irradiance_map_id);
+                glActiveTexture(GL_TEXTURE1);
+                shader.setInt("shadowMap", 1);
+                //need to modified
+                glBindTexture(GL_TEXTURE_2D , depthMap);
+
+            }
+
+
+            else if (material->getMaterialType() == MAT::Material_type::MATALIC) {
+                shader.setVec4("baseColorFactor", material->getBaseColorFactor());
+                shader.setInt("baseColorMode", material->getBaseColorMode());
+                shader.setInt("metallicMode", material->getMetallicMode());
+                shader.setInt("roughnessMode", material->getRoughnessMode());
+                shader.setFloat("metallicFactor", material->getMetallicFactor());
+                shader.setFloat("roughnessFactor", material->getRoughnessFactor());
+
+           
+
+             
+
+                auto baseColorTexture = material->getbaseColorTexture();
+                if (!baseColorTexture.empty()) {
+                    shader.setInt("baseColorMap", 0);
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, textures_loaded[baseColorTexture]->glResourceID);
+                }
+                auto metallicRoughnessTexture = material->getmetallicRoughnessTexture();
+                if (!metallicRoughnessTexture.empty()) {
+                    shader.setInt("metallicRoughnessMap", 1);
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, textures_loaded[metallicRoughnessTexture]->glResourceID);
+                }
+
+                if (ibl_diffuse_irradiance_map_id != -1) {
+                
+                
+                    shader.setInt("DiffuseIrradianceMap", 2);
+                    glActiveTexture(GL_TEXTURE2);
+                    
+                    glBindTexture(GL_TEXTURE_CUBE_MAP,ibl_diffuse_irradiance_map_id);
+                }
+            }
+            mesh.Draw();
+            glActiveTexture(GL_TEXTURE0);
         }
     }
 
+    void loadMaterials(const aiScene* scene,MAT::Material_type material_type);
     void setCubeMapTextures(vector<std::string> faces);
     void loadPRTparameters(string path, Shader& shader);
+
+    // checks all material textures of a given type and loads the textures if they're not loaded yet.
+    // the required info is returned as a Texture struct.
+    vector<shared_ptr<Texture>> loadMaterialTextures(aiMaterial* mat, aiTextureType type);
 
 
 private:
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
-    void loadModel(string const& path)
+    void loadModel(string const& path , const ModelTransform& transform, MAT::Material_type material_type)
     {
+        //get the file type
+        string suffixStr = path.substr(path.find_last_of(".") + 1);
+       // std::cout << suffixStr;
+    
         // read file via ASSIMP
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
@@ -73,13 +208,17 @@ private:
         }
         // retrieve the directory path of the filepath
         directory = path.substr(0, path.find_last_of('/'));
+        cout << directory << endl;
 
         // process ASSIMP's root node recursively
-        processNode(scene->mRootNode, scene);
+        processNode(scene->mRootNode, scene,transform,material_type);
+        loadMaterials(scene, material_type);
+        
+
     }
 
     // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
-    void processNode(aiNode* node, const aiScene* scene)
+    void processNode(aiNode* node, const aiScene* scene, const ModelTransform& transform, MAT::Material_type material_type)
     {
         // process each mesh located at the current node
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -87,18 +226,19 @@ private:
             // the node object only contains indices to index the actual objects in the scene. 
             // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.push_back(processMesh(mesh, scene));
+            meshes.push_back(processMesh(mesh, scene, transform, material_type));
         }
         // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            processNode(node->mChildren[i], scene);
+            processNode(node->mChildren[i], scene,transform, material_type);
         }
 
     }
 
-    Mesh processMesh(aiMesh* mesh, const aiScene* scene)
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene , const ModelTransform& transform, MAT::Material_type material_type)
     {
+    
         // data to fill
         vector<Vertex> vertices;
         vector<unsigned int> indices;
@@ -107,12 +247,13 @@ private:
         // walk through each of the mesh's vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
+            //scale --> rotation -> translation
             Vertex vertex;
             glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
             // positions
-            vector.x = mesh->mVertices[i].x;
-            vector.y = mesh->mVertices[i].y;
-            vector.z = mesh->mVertices[i].z;
+            vector.x = transform.sx * mesh->mVertices[i].x + transform.tx;
+            vector.y = transform.sy * mesh->mVertices[i].y + transform.ty;
+            vector.z = transform.sz * mesh->mVertices[i].z + transform.tz;
             vertex.Position = vector;
             // normals
             if (mesh->HasNormals())
@@ -155,73 +296,10 @@ private:
             for (unsigned int j = 0; j < face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
-        // process materials
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-        // Same applies to other texture as the following list summarizes:
-        // diffuse: texture_diffuseN
-        // specular: texture_specularN
-        // normal: texture_normalN
 
-        //materials 
-        Material mat;
-        aiColor3D color;
-        material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-        mat.ambient = glm::vec3(color.r, color.g, color.b);
-        material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-        mat.diffuse = glm::vec3(color.r, color.g, color.b);
-        material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-        mat.specular = glm::vec3(color.r, color.g, color.b);
-
-        // 1. diffuse maps
-        vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        // 2. specular maps
-        vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-        // 3. normal maps
-        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-        // 4. height maps
-        std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
+     
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures,mat);
-    }
-
-    // checks all material textures of a given type and loads the textures if they're not loaded yet.
-    // the required info is returned as a Texture struct.
-    vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
-    {
-        vector<Texture> textures;
-        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-        {
-            aiString str;
-            mat->GetTexture(type, i, &str);
-            // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
-            bool skip = false;
-            for (unsigned int j = 0; j < textures_loaded.size(); j++)
-            {
-                if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
-                {
-                    textures.push_back(textures_loaded[j]);
-                    skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
-                    break;
-                }
-            }
-            if (!skip)
-            {   // if texture hasn't been loaded already, load it
-                Texture texture;
-                texture.id = TextureFromFile(str.C_Str(), this->directory);
-                texture.type = typeName;
-                texture.path = str.C_Str();
-                textures.push_back(texture);
-                textures_loaded.push_back(texture);  // store it as texture loaded for entire model, to ensure we won't unnecesery load duplicate textures.
-            }
-        }
-        return textures;
+        return Mesh(vertices, indices,mesh->mMaterialIndex);
     }
 };
 

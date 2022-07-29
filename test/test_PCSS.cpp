@@ -56,12 +56,12 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-  //  glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetMouseButtonCallback(window, mouse);
+  //  glfwSetMouseButtonCallback(window, mouse);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -86,9 +86,11 @@ int main()
     // -----------
 
 
-
-    Model *ourModel = new Model("../../../assets/mary/Marry.obj");
+     ModelTransform trans(0.f, 2.f, 0.f);
+    Model *ourModel = new Model("../../../assets/DamagedHelmet/DamagedHelmet.gltf",trans);
     Model *floor = new Model("../../../assets/floor/floor.obj");
+
+
 
     Scene scene;
     scene.addModels(ourModel, MarryShader);
