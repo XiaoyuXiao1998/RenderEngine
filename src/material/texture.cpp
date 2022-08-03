@@ -44,7 +44,9 @@ Texture::Texture(
 void Texture::SetupGL() {
     glGenTextures(1, &glResourceID);
     glBindTexture(GL_TEXTURE_2D, glResourceID);
+ 
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, dataType, data);
+   
     if (generateMips) {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
@@ -103,6 +105,8 @@ HDRTexture::HDRTexture(const string& path) {
         data = malloc(width * height * nrComponents * sizeof(float));
         memcpy(data, load_data, sizeof(float) * width * height * nrComponents);
         stbi_image_free(load_data);
+
+       
     }
     if (data == nullptr) {
         std::cout << "Texture failed to load at path: " << path << std::endl;
@@ -189,3 +193,4 @@ unsigned int loadCubeMap(vector<std::string> faces) {
 
     return textureID;
 }
+

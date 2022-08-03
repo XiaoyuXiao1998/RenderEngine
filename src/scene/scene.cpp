@@ -138,7 +138,7 @@ void Scene::viewDepthMap() {
 }
 
 
-void Scene::renderScene() {
+void Scene::renderScene(RENDER_MODE mode) {
 
 	// render the loaded model
 	glm::mat4 model = glm::mat4(1.0f);
@@ -230,13 +230,23 @@ void Scene::renderScene() {
 
 
 		if (i == models.size() - 1) {
-			glEnable(GL_CULL_FACE);
-			glCullFace(GL_FRONT);
-			models[i]->Draw(*shaders[i], depthMap, ibl_diffuse_irradiance_map);
-			glDisable(GL_CULL_FACE);
+			if (mode == test_IBL_PBR_SHADAW) {
+				glEnable(GL_CULL_FACE);
+				glCullFace(GL_FRONT);
+				models[i]->Draw(*shaders[i], depthMap, ibl_diffuse_irradiance_map);
+				glDisable(GL_CULL_FACE);
+			}
+			else if (mode == test_IBL_PBR) {
+
+
+				glDepthFunc(GL_LEQUAL); // set depth function back to default
+				models[i]->Draw(*shaders[i], depthMap, ibl_diffuse_irradiance_map, ibl_prefilter_map);
+				glDepthFunc(GL_LESS);
+				
+			}
 		}
 		else {
-			models[i]->Draw(*shaders[i], depthMap, ibl_diffuse_irradiance_map);
+			models[i]->Draw(*shaders[i], depthMap, ibl_diffuse_irradiance_map,  ibl_prefilter_map, ibl_BRDFLUT_map);
 		}
 
 

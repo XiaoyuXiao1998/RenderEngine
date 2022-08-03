@@ -11,6 +11,7 @@ in vec3 FragPos;
 uniform sampler2D baseColorMap;
 uniform sampler2D normalMap;
 uniform sampler2D metallicRoughnessMap;
+uniform sampler2D BRDFLUT;
 
 
 
@@ -29,6 +30,8 @@ uniform bool useNormalMap;
 
 //********************************IBL related variables*******************************************************
 uniform samplerCube DiffuseIrradianceMap;
+uniform samplerCube PrefilteredMap;
+
 
 
 
@@ -96,21 +99,26 @@ void main(){
      vec3 IBL_Color = vec3(0);
      //KS part is fresnel part
      vec3 KS  = fresnelSchlick(F0, V, H);
-     vec3 KD =vec3(1.0) -KS;
-     IBL_Color+= KD*texture(DiffuseIrradianceMap,N).rgb*albedo;
-
+     vec3 KD =(vec3(1.0) -KS)* (1.f-metallic );
+     IBL_Color+= texture(DiffuseIrradianceMap,L).rgb*albedo * KD;
+     
+     vec2 scale_bias =  texture(BRDFLUT, vec2(max(dot(N,V),0.0),uRoughness)).rg;
+      vec3 R= reflect(-V,N);
+     vec3 prefilterdColor = textureLod(PrefilteredMap,R,uint(4*uRoughness)).rgb;
+     IBL_Color += prefilterdColor* albedo * (scale_bias.x * F0 + scale_bias.g);
+     
      //******************************sum  part***********************************************
      vec3 Lo = vec3(0.0);
-	 Lo +=  (albedo * BRDF   + KD*albedo/PI) * NdotL + IBL_Color;
-	 vec3 color = (albedo * BRDF   + KD*albedo/PI) * NdotL + IBL_Color;
-     color = KD*texture(DiffuseIrradianceMap,N).rgb;
-  
+	 Lo +=  (albedo * BRDF+  (1.f-F ) * albedo/PI) * NdotL;
+     //+ IBL_Color;
+	 vec3 color = IBL_Color ;
 
       // HDR tonemapping
 	color = color / (color + vec3(1.0));
         // gamma correct
-	color = pow(color, vec3(1.0/5.2)); 
+	color = pow(color, vec3(1.0/4.2)); 
 
+ ;
 
 
     gl_FragColor = vec4(color, 1.0);

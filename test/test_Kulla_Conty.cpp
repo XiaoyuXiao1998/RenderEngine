@@ -9,6 +9,7 @@
 #include "../include/scene/scene.h"
 #include "../include/camera/camera.h"
 #include"../include/light/dir_light.h"
+#include"../include/EnvGenerator/EnvGenerator.h"
 
 #include <iostream>
 
@@ -22,7 +23,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 2.0f, 30.0f));
+Camera camera(glm::vec3(0.0f, 0.f, 4.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -32,9 +33,10 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
-
 int main()
 {
+
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -79,53 +81,79 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader* shader = new Shader("../../../shader/KullaConty.vert", "../../../shader/KullaConty.frag");
+    Shader* BallShader = new Shader("../../../shader/KullaConty.vert", "../../../shader/KullaConty.frag");
+    Shader* SkyboxShader = new Shader("../../../shader/skyBox.vert", "../../../shader/skyBox.frag");
+
 
     // load models
     // -----------
-    ModelTransform transform1;
-    Model* model_1 = new Model("../../../assets/ball/Testobj.obj");
-    /*
-    ModelTransform transform2(10, 0 ,0);
-    Model* model_2 = new Model("../../../assets/ball/Testobj.obj",transform2);
-    model_2->setMaterialType(MAT::Material_type::SPECULAR);
 
 
-    ModelTransform transform3(-10,0 , 0);
-    Model* model_3 = new Model("../../../assets/ball/Testobj.obj", transform3);
-    model_3->setMaterialType(MAT::Material_type::SPECULAR);
+    ModelTransform  transform1(0, 0.f, 0.f);
 
-    ModelTransform transform4(0, -10, 0);
-    Model* model_4 = new Model("../../../assets/ball/Testobj.obj", transform4);
-    model_4->setMaterialType(MAT::Material_type::SPECULAR);
+    Model* ourModel = new Model("../../../assets/chrome_ball/scene.gltf", transform1, MAT::Material_type::MATALIC);
+    ModelTransform  transform2(0, 0, 0, 1, 1, 1);
+    Model* Skybox = new Model("../../../assets/testObj/testObj.obj", transform2);
 
-    ModelTransform transform5(10, -10, 0);
-    Model* model_5 = new Model("../../../assets/ball/Testobj.obj", transform5);
-    model_5->setMaterialType(MAT::Material_type::SPECULAR);
+    //set prt parameters
+  //  ourModel->loadPRTparameters("../../../assets//cubemap/CornellBox", *BallShader);
 
 
-    ModelTransform transform6(-10, -10, 0);
-    Model* model_6 = new Model("../../../assets/ball/Testobj.obj", transform6);
-    model_6->setMaterialType(MAT::Material_type::SPECULAR);
-
-    */
-
-
+    vector<std::string> faces
+    {
+       "../../../assets/cubemap/GraceCathedral/posx.jpg",
+       "../../../assets/cubemap/GraceCathedral/negx.jpg",
+       "../../../assets/cubemap/GraceCathedral/posy.jpg",
+       "../../../assets/cubemap/GraceCathedral/negy.jpg",
+       "../../../assets/cubemap/GraceCathedral/posz.jpg",
+       "../../../assets/cubemap/GraceCathedral/negz.jpg"
+    };
+  //  SkyboxShader->use();
+   //SkyboxShader->setInt("skybox", 0);
+   // Skybox->setCubeMapTextures(faces);
+    Skybox->setCubeMapTextures("../../../assets/winter_sky_1k.hdr");
 
     Scene scene;
-    scene.addModels(model_1, shader);
-    //scene.addModels(model_2, shader);
-    //scene.addModels(model_3, shader);
-    //scene.addModels(model_4, shader);
-    //scene.addModels(model_5, shader);
-    //scene.addModels(model_6, shader);
+    scene.addModels(ourModel, BallShader);
+    scene.addModels(Skybox, SkyboxShader);
+
     scene.setCamera(&camera);
 
+    //reference :  3.594112
+    scene.setTestAreaLight(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), true, glm::vec3(0, 32.94, 0.f), 1, 1);
+
+
+    //**************set IBL************************
+    //initialize ibl generator
+    EnvGenerator* envGenerator;
+    envGenerator = new EnvGenerator(128);
+
+    //TODO:generate diffuse irradiance map
+    envGenerator->setupGL();
+    envGenerator->genIrradiance(glm::vec3(transform1.tx, transform1.ty, transform1.tz), Skybox);
+
+    envGenerator->setupGL(preFilteredMap,true);
+    envGenerator->genPrefiltedMap(glm::vec3(transform1.tx, transform1.ty, transform1.tz), Skybox);
+    envGenerator->loadBRDFLUTMap();
 
 
 
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+
+    //set scene diffuse irradiacne map
+    scene.setDiffuseIrradianceMap(envGenerator->getDiffuseIrradianceMapId());
+    scene.setPrefilterMap(envGenerator->getPrefilterMapID());
+    scene.setBRDFLUT(envGenerator->getBRDFLUTID());
+
+
+    // scene.setDiffuseIrradianceMap(Skybox->mesh_materials[0]->getCubeMapId());
+
+
+
+
+
+     // draw in wireframe
+     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     scene.setDepthMap();
 
     // render loop
@@ -144,13 +172,12 @@ int main()
 
         // render
         // ------
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // scene.viewDepthMap();
-       // float time = (float)glfwGetTime() / 2;
-       // scene.testSH(time);
-        scene.renderScene();
+        //scene.viewDepthMap();
+        float time = (float)glfwGetTime() / 2;
+        scene.renderScene(test_IBL_PBR);
 
 
 

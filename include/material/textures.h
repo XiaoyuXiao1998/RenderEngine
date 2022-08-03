@@ -36,3 +36,10 @@ class HDRTexture :public Texture {
 public:
     explicit HDRTexture(const string& path);
 };
+
+
+unsigned int loadCubeMap(vector<std::string> faces);
+unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+
+
+

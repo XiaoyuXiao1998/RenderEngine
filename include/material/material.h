@@ -47,6 +47,7 @@ public:
 	virtual int getRoughnessMode() { return 0; }
 	virtual float getMetallicFactor() { return -1; }
 	virtual float getRoughnessFactor() { return -1; }
+	string getNormalTexture() { return Normal; }
 
 public:
 	//common texture for Specular and metalic

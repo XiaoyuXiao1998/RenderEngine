@@ -8,6 +8,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../../include/utils/SH.h"
 
+enum RENDER_MODE {
+	test_IBL_PBR,
+	test_IBL_PBR_SHADAW,
+};
+
+
 class Scene {
 	// settings
 	const unsigned int SCR_WIDTH = 800;
@@ -18,6 +24,8 @@ class Scene {
 	unsigned int depthMapFBO;
 	unsigned int depthMap;
 	unsigned int ibl_diffuse_irradiance_map;
+	unsigned int ibl_prefilter_map;
+	unsigned int ibl_BRDFLUT_map;
 
 	vector<Model*> models;
 	vector<Shader*> shaders;
@@ -43,7 +51,7 @@ public:
 	void addLight(EmissiveMaterial* light) {
 		lights.push_back(light);
 	}
-	void renderScene();
+	void renderScene(RENDER_MODE mode = test_IBL_PBR_SHADAW);
 
 	void setDepthMap();
 	
@@ -57,5 +65,11 @@ public:
 
 	void setDiffuseIrradianceMap(unsigned int ibl_diffuse_irradiance_id) {
 		this->ibl_diffuse_irradiance_map = ibl_diffuse_irradiance_id;
+	}
+	void setPrefilterMap(unsigned int ibl_prefilter_map) {
+		this->ibl_prefilter_map = ibl_prefilter_map;
+	}
+	void setBRDFLUT(unsigned int ibl_BRDFLUT_map) {
+		this->ibl_BRDFLUT_map = ibl_BRDFLUT_map;
 	}
 };

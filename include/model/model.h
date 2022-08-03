@@ -22,10 +22,6 @@
 #include <vector>
 using namespace std;
 
-unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
-unsigned int loadCubeMap(vector<std::string> faces);
-
-
 
 //used for model transform
 struct ModelTransform {
@@ -119,8 +115,10 @@ public:
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader& shader, unsigned int &depthMap,
-        unsigned int ibl_diffuse_irradiance_map_id = -1)
+    void Draw(Shader& shader, unsigned int& depthMap,
+        unsigned int ibl_diffuse_irradiance_map_id = -1,
+        unsigned int ibl_prefilter_map_id = -1,
+        unsigned int ibl_BRDFLUT_map_id = -1)
     {
 
         shader.use();
@@ -130,9 +128,8 @@ public:
                 glActiveTexture(GL_TEXTURE0);
                 shader.setInt("skybox", 0);
                 //need to modified
-                //glBindTexture(GL_TEXTURE_CUBE_MAP, material->getCubeMapId());
-           
-                glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_diffuse_irradiance_map_id);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, material->getCubeMapId());
+                //glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_prefilter_map_id);
                 glActiveTexture(GL_TEXTURE1);
                 shader.setInt("shadowMap", 1);
                 //need to modified
@@ -153,26 +150,44 @@ public:
 
              
 
-                auto baseColorTexture = material->getbaseColorTexture();
-                if (!baseColorTexture.empty()) {
-                    shader.setInt("baseColorMap", 0);
+              
+
+                if (ibl_BRDFLUT_map_id != -1) {
+
+
+                    shader.setInt(" BRDFLUT", 0);
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, textures_loaded[baseColorTexture]->glResourceID);
+                    glBindTexture(GL_TEXTURE_2D, ibl_BRDFLUT_map_id);
                 }
+
                 auto metallicRoughnessTexture = material->getmetallicRoughnessTexture();
                 if (!metallicRoughnessTexture.empty()) {
                     shader.setInt("metallicRoughnessMap", 1);
                     glActiveTexture(GL_TEXTURE1);
                     glBindTexture(GL_TEXTURE_2D, textures_loaded[metallicRoughnessTexture]->glResourceID);
                 }
+                auto baseColorTexture = material->getbaseColorTexture();
+                if (!baseColorTexture.empty()) {
+                    shader.setInt("baseColorMap", 2);
+                    glActiveTexture(GL_TEXTURE2);
+                    glBindTexture(GL_TEXTURE_2D, textures_loaded[baseColorTexture]->glResourceID);
+                }
+               // auto NormalTexture;
 
                 if (ibl_diffuse_irradiance_map_id != -1) {
                 
                 
-                    shader.setInt("DiffuseIrradianceMap", 2);
-                    glActiveTexture(GL_TEXTURE2);
+                    shader.setInt("DiffuseIrradianceMap", 3);
+                    glActiveTexture(GL_TEXTURE3);
                     
                     glBindTexture(GL_TEXTURE_CUBE_MAP,ibl_diffuse_irradiance_map_id);
+                }
+
+                if (ibl_prefilter_map_id != -1) {
+                    shader.setInt("PrefilteredMap", 4);
+                    glActiveTexture(GL_TEXTURE4);
+
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, ibl_prefilter_map_id);
                 }
             }
             mesh.Draw();
@@ -182,6 +197,7 @@ public:
 
     void loadMaterials(const aiScene* scene,MAT::Material_type material_type);
     void setCubeMapTextures(vector<std::string> faces);
+    void setCubeMapTextures(const char* path);
     void loadPRTparameters(string path, Shader& shader);
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.

@@ -14,6 +14,88 @@ void Model::setCubeMapTextures(vector<std::string> faces) {
 
 }
 
+void Model::setCubeMapTextures(const char* path)
+{
+    constexpr unsigned int mapResolution = 128;
+
+    MAT::Material* skybox_material = new MAT::SkyBoxMaterial();
+    skybox_material->setMaterialType(MAT::Material_type::SKYBOX);
+
+    //**************gen CubeMap from the HDR************************
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F,
+            mapResolution,
+            mapResolution, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    HDRTexture hdrTexture(path);
+    hdrTexture.SetupGL();
+    //***************use this hdr texture to generate cube map*********************************
+
+    unsigned int HDRCubeMapFBO;
+    unsigned int HDRCubeMapRBO;
+    glGenFramebuffers(1, &HDRCubeMapFBO);
+    glGenRenderbuffers(1, &HDRCubeMapRBO);
+
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mapResolution, mapResolution);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, HDRCubeMapRBO);
+
+    glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    glm::mat4 captureViews[] =
+    {
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+    };
+
+    Shader HdrToCubeMapCalculateShader("../../../shader/IBL/EnvDiffuseIrradiance.vert", "../../../shader/CubeMapFromHdr.frag");
+    HdrToCubeMapCalculateShader.use();
+    HdrToCubeMapCalculateShader.setInt("HDRMap",0);
+    HdrToCubeMapCalculateShader.setMat4("projection", captureProjection);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,hdrTexture.glResourceID );
+    glViewport(0, 0, mapResolution, mapResolution); // don't forget to configure the viewport to the capture dimensions.
+    glBindFramebuffer(GL_FRAMEBUFFER, HDRCubeMapFBO);
+
+
+    for (unsigned int i = 0; i < 6; i++) {
+
+        HdrToCubeMapCalculateShader.setMat4("view", captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, textureID, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        meshes[0].Draw();
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GLuint b[] = { HDRCubeMapFBO,HDRCubeMapRBO };
+    glDeleteBuffers(2, b);
+
+
+  
+
+    //***************set gennerate Cubema***************************
+    skybox_material->setCubeMapId(textureID);
+    mesh_materials.emplace_back(skybox_material);
+    //set material_index;
+    meshes[0].mMaterialIndex = 0;
+}
+
 void Model::loadPRTparameters(string path, Shader& shader) {
     string light_path = path + "/light.txt";
     string LT_path = path + "/transport.txt";

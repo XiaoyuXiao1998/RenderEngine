@@ -32,8 +32,11 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+
 int main()
 {
+
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -134,6 +137,7 @@ int main()
    // scene.setDiffuseIrradianceMap(Skybox->mesh_materials[0]->getCubeMapId());
 
     
+
 
 
     // draw in wireframe
