@@ -16,3 +16,7 @@ This is my personal rendering engine project that uses OPENGL exclusively to lea
 1.Rotating Enviroment Lighting using SH function
 
 <img src = "https://github.com/XiaoyuXiao1998/RenderEngine/blob/master/demos/rotating_PRT.png"  style='float:left; width:400px;height:300 px'/>
+
+### PBR-IBL
+
+<img src = "https://github.com/XiaoyuXiao1998/RenderEngine/blob/master/demos/IBL.png"  style='float:left; width:400px;height:300 px'/>
